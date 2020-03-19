@@ -34,6 +34,14 @@ var reqDur = &Metric{
 	Args:        []string{"code", "method", "url"},
 }
 
+//histogram type metrics 생성
+var reqDurBucket = &Metric{
+	ID:          "reqDur_bucket",
+	Name:        "request_duration_seconds",
+	Description: "The HTTP request latencies in seconds.",
+	buckets:     []float64{0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0},
+	Type:        "histogram"}
+
 var resSz = &Metric{
 	ID:          "resSz",
 	Name:        "response_size_bytes",
@@ -49,6 +57,7 @@ var reqSz = &Metric{
 var standardMetrics = []*Metric{
 	reqCnt,
 	reqDur,
+	reqDurBucket,
 	resSz,
 	reqSz,
 }
@@ -83,6 +92,7 @@ type Metric struct {
 	Description     string
 	Type            string
 	Args            []string
+	buckets         []float64
 }
 
 // Prometheus contains the metrics gathered by the instance and its path
@@ -90,6 +100,7 @@ type Prometheus struct {
 	reqCnt        *prometheus.CounterVec
 	reqDur        *prometheus.HistogramVec
 	reqSz, resSz  prometheus.Summary
+	reqDurBucket  prometheus.Histogram
 	router        *gin.Engine
 	listenAddress string
 	Ppg           PrometheusPushGateway
@@ -297,6 +308,7 @@ func NewMetric(m *Metric, subsystem string) prometheus.Collector {
 				Subsystem: subsystem,
 				Name:      m.Name,
 				Help:      m.Description,
+				Buckets:   m.buckets,
 			},
 		)
 	case "summary_vec":
@@ -336,6 +348,8 @@ func (p *Prometheus) registerMetrics(subsystem string) {
 			p.resSz = metric.(prometheus.Summary)
 		case reqSz:
 			p.reqSz = metric.(prometheus.Summary)
+		case reqDurBucket:
+			p.reqDurBucket = metric.(prometheus.Histogram)
 		}
 		metricDef.MetricCollector = metric
 	}
@@ -380,7 +394,8 @@ func (p *Prometheus) HandlerFunc() gin.HandlerFunc {
 			url = u.(string)
 		}
 		p.reqDur.WithLabelValues(status, c.Request.Method, url).Observe(elapsed)
-		p.reqCnt.WithLabelValues(status, c.Request.Method, c.HandlerName(), c.Request.Host, url).Inc()
+		p.reqCnt.WithLabelValues(status, c.Request.Method, c.Request.Host, url).Inc()
+		//p.reqDurBucket.Observe(elapsed)
 		p.reqSz.Observe(float64(reqSz))
 		p.resSz.Observe(resSz)
 	}
