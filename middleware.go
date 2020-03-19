@@ -24,7 +24,7 @@ var reqCnt = &Metric{
 	Name:        "requests_total",
 	Description: "How many HTTP requests processed, partitioned by status code and HTTP method.",
 	Type:        "counter_vec",
-	Args:        []string{"code", "method", "handler", "host", "url"}}
+	Args:        []string{"code", "method", "host", "url"}}
 
 var reqDur = &Metric{
 	ID:          "reqDur",
