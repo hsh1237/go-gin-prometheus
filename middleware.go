@@ -37,7 +37,7 @@ var reqDur = &Metric{
 //histogram type metrics 생성
 var reqDurBucket = &Metric{
 	ID:          "reqDur_bucket",
-	Name:        "request_duration_seconds",
+	Name:        "request_duration_seconds_buc",
 	Description: "The HTTP request latencies in seconds.",
 	buckets:     []float64{0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0},
 	Type:        "histogram"}
@@ -57,7 +57,7 @@ var reqSz = &Metric{
 var standardMetrics = []*Metric{
 	reqCnt,
 	reqDur,
-	reqDurBucket,
+	//reqDurBucket,
 	resSz,
 	reqSz,
 }
@@ -97,10 +97,10 @@ type Metric struct {
 
 // Prometheus contains the metrics gathered by the instance and its path
 type Prometheus struct {
-	reqCnt        *prometheus.CounterVec
-	reqDur        *prometheus.HistogramVec
-	reqSz, resSz  prometheus.Summary
-	reqDurBucket  prometheus.Histogram
+	reqCnt       *prometheus.CounterVec
+	reqDur       *prometheus.HistogramVec
+	reqSz, resSz prometheus.Summary
+	//reqDurBucket  prometheus.Histogram
 	router        *gin.Engine
 	listenAddress string
 	Ppg           PrometheusPushGateway
@@ -349,7 +349,7 @@ func (p *Prometheus) registerMetrics(subsystem string) {
 		case reqSz:
 			p.reqSz = metric.(prometheus.Summary)
 		case reqDurBucket:
-			p.reqDurBucket = metric.(prometheus.Histogram)
+			//p.reqDurBucket = metric.(prometheus.Histogram)
 		}
 		metricDef.MetricCollector = metric
 	}
